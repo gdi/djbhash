@@ -34,11 +34,9 @@ struct h_table {
 // Some various return functions.
 enum djbll_data_type {
   DJBLL_INT,
-  DJBLL_UINT,
   DJBLL_DOUBLE,
   DJBLL_CHAR,
   DJBLL_STRING,
-  DJBLL_USTRING,
   DJBLL_ARRAY,
 };
 
