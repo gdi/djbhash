@@ -1,8 +1,7 @@
-#djbll - A simple hash table implementation using the DJB string hashing function.
-#=================================================================================
+##djbll - A simple hash table implementation using the DJB string hashing function.
 
-## Usage:
-### Initializing the hash table.
+### Usage:
+#### Initializing the hash table.
 ```c
   // The hash table object.
   struct h_table ht;
@@ -13,19 +12,18 @@
   djbll_init( &ht, 2 );
 ```
 
-### Adding an item to the hash.
+#### Adding an item to the hash.
 ```c
-  /* djbll_set( <hash table pointer>, <key>, <value>, <value data type>, (optional count for array data type).
-   * ===========================================================================================*
-   * Supported data types:									*
-   * ===========================================================================================*
-   *    DJBLL_INT => int									*
-   *    DJBLL_DOUBLE => double (or float)							*
-   *    DJBLL_CHAR => char									*
-   *    DJBLL_STRING => char *, const char *, unsigned char *, const unsigned char *		*
-   *    DJBLL_ARRAY => int * - When used, must also pass the count parameter to djbll_set.	*
-   * ===========================================================================================*
-
+  /* djbll_set( <hash>, <key>, <value>, <data type>, <count (optional) >.
+   *
+   * Supported data types
+   * =====================
+   *    DJBLL_INT => int
+   *    DJBLL_DOUBLE => double (or float)
+   *    DJBLL_CHAR => char
+   *    DJBLL_STRING => char *, const char *
+   *    DJBLL_ARRAY => int * (When used, must also pass the count parameter)
+  */
 
   // Item with int value.
   int temp = ( 10 );
@@ -47,7 +45,7 @@
   djbll_set( &ht, "array", temp_arr, DJBLL_ARRAY, 7 );
 ```
 
-### Finding an item in the hash.
+#### Finding an item in the hash.
 ```c
   // Pointer to the hash item.
   struct h_node *item;
@@ -68,9 +66,9 @@
     printf( "%s: No such item!\n", missing );
 ```
 
-### Cleanup:
+#### Cleanup:
   // Remove all items and free memory.
   djbll_destroy( &ht );
 ```
 
-## For a full example, see test.c.
+### For a full example, see test.c.
