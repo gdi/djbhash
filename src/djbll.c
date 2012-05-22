@@ -92,7 +92,7 @@ int djbll_set( struct h_table *ht, char *key, void * value, int data_type, ... )
 
   // Create our hash item.
   temp = malloc( sizeof( struct h_node ) );
-  temp->key = key;
+  temp->key = strdup( key );
   temp->value = value;
   temp->data_type = data_type;
   temp->count = count;
@@ -178,6 +178,11 @@ void djbll_empty( struct h_table *ht )
     iter = ht->ll[i];
     while ( iter )
     {
+      if ( iter->key != NULL )
+      {
+        free( iter->key );
+        iter->key = NULL;
+      }
       next = iter->next;
       free( iter );
       iter = next;
