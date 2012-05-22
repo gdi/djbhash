@@ -49,16 +49,15 @@
 ```c
   // Pointer to the hash item.
   struct h_node *item;
+  void *value;
 
   // Add an item to find.
   djbll_set( &ht, "foo", "bar", DJBLL_STRING );
 
   // Find and print an item.
   item = djbll_find( &ht, "foo" );
+  value = item->value;
   djbll_print( item );
-  // Output: "foo => bar"
-
-  // The value item (void * data type) can be accessed with item->value.
 
   // Search for an item that doesn't exist:
   char *missing = "missing";
