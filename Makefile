@@ -8,6 +8,7 @@ install:
 
 clean:
 	rm -f obj/*
+	rm -f djbll
 
 test:
 	gcc -o djbll test.c -ldjbll
