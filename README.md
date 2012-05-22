@@ -66,6 +66,7 @@
 ```
 
 #### Cleanup:
+```c
   // Remove all items and free memory.
   djbll_destroy( &ht );
 ```
