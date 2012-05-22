@@ -1,2 +1,13 @@
 all:
-	gcc -o djbll test.c djbll.c;
+	gcc -o obj/djbll.o -fPIC -c src/djbll.c
+	gcc -shared -o obj/libdjbll.so obj/djbll.o
+
+install:
+	cp obj/*.so /usr/local/lib
+	cp src/*.h /usr/local/include
+
+clean:
+	rm -f obj/*
+
+test:
+	gcc -o djbll test.c -ldjbll
