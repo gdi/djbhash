@@ -58,7 +58,7 @@ unsigned int djb_hash( char *key, int length )
   hash = 5381;
   for ( i = 0; i < length; key++, i++ )
     hash = ( ( hash << 5 ) + hash ) + ( *key );
-  return hash % 65536;
+  return hash % DJBHASH_MAX_BUCKETS;
 }
 
 // Find the bucket for the element.

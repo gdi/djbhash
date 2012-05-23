@@ -11,6 +11,7 @@
 #endif
 
 #define DJBHASH_CHUNK_SIZE 512
+#define DJBHASH_MAX_BUCKETS 65536
 
 // Node structure
 struct djbhash_node {
