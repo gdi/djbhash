@@ -58,7 +58,7 @@ unsigned int djb_hash( char *key, int length )
   hash = 5381;
   for ( i = 0; i < length; key++, i++ )
     hash = ( ( hash << 5 ) + hash ) + ( *key );
-  return hash % 32768;
+  return hash % 65536;
 }
 
 // Find the bucket for the element.
@@ -136,7 +136,7 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
 
   // Create our hash item.
   temp = malloc( sizeof( struct djbhash_node ) );
-  temp->key = strdup( key );
+  temp->key = key;
   temp->value = value;
   temp->data_type = data_type;
   temp->count = count;
