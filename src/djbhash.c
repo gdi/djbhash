@@ -100,6 +100,8 @@ int djbhash_bin_search( struct h_table *ht, char *key, int min, int max, int ind
   }
 
   mid = ( min + max ) / 2;
+//printf( "min: %d, max: %d, mid: %d, size: %d, index: %d, key: '%s', cmp: '%s'\n", min, max, mid, ht->count[index], index, key, ht->ll[index][mid].key );
+
   cmp = strncmp( ht->ll[index][mid].key, key, length );
 
   if ( cmp > 0 )
@@ -117,12 +119,9 @@ int djbhash_set_arr( struct h_table *ht, char *key, void *value, int data_type, 
   int chunks;
   int insert_pos;
   struct h_node *item;
-  unsigned char *swapper;
-  int temp;
   int insert;
 
   insert_pos = djbhash_bin_search( ht, key, 0, ht->count[index] - 1, index, length, true );
-
   insert = true;
   if ( insert_pos < ht->count[index] )
   {
@@ -137,34 +136,25 @@ int djbhash_set_arr( struct h_table *ht, char *key, void *value, int data_type, 
   if ( insert )
   {
     // See if we need more memory.
-    chunks = ht->count[index] / DJBHASH_CHUNK_SIZE;
-    if ( ( ht->count[index] + 1 ) % DJBHASH_CHUNK_SIZE == 0 )
-      ht->ll[index] = realloc( ht->ll[index], sizeof( struct h_node * ) * ( chunks + 1 ) );
+    chunks = ht->count[index] / DJBHASH_CHUNK_SIZE + 1;
+    if ( ht->count[index] > 0 && ht->count[index] % DJBHASH_CHUNK_SIZE == 0 )
+      ht->ll[index] = realloc( ht->ll[index], sizeof( struct h_node ) * ( ( chunks + 1 ) * DJBHASH_CHUNK_SIZE ) );
 
     // Move all of the bigger elements over.
-    for ( i = ht->count[index] - 1; i >= insert_pos; i-- )
+    for ( i = ht->count[index]; i > insert_pos; i-- )
     {
       // Move the key.
-      swapper = ht->ll[index][i].key;
       ht->ll[index][i].key = ht->ll[index][i - 1].key;
-      ht->ll[index][i + 1].key = swapper;
 
       // Move the value.
-      swapper = ht->ll[index][i].value;
-      ht->ll[index][i].value = ht->ll[index][i + 1].value;
-      ht->ll[index][i + 1].value = swapper;
+      ht->ll[index][i].value = ht->ll[index][i - 1].value;
 
       // Move the data type.
-      temp = ht->ll[index][i].data_type;
-      ht->ll[index][i].data_type = ht->ll[index][i + 1].data_type;
-      ht->ll[index][i + 1].data_type = temp;
+      ht->ll[index][i].data_type = ht->ll[index][i - 1].data_type;
 
       // Move the array count.
-      temp = ht->ll[index][i].count;
-      ht->ll[index][i].count = ht->ll[index][i + 1].count;
-      ht->ll[index][i + 1].count = temp;
+      ht->ll[index][i].count = ht->ll[index][i - 1].count;
     }
-
     // Add the new element.
     ht->ll[index][insert_pos].key = strdup( key );
     ht->ll[index][insert_pos].value = value;

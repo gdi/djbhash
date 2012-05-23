@@ -10,7 +10,7 @@
   #define false 0
 #endif
 
-#define DJBHASH_CHUNK_SIZE 8
+#define DJBHASH_CHUNK_SIZE 16
 
 // Node structure
 struct h_node {
