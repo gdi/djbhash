@@ -32,7 +32,7 @@ struct h_table {
 };
 
 // Some various return functions.
-enum djbll_data_type {
+enum djbhash_data_type {
   DJBLL_INT,
   DJBLL_DOUBLE,
   DJBLL_CHAR,
@@ -43,10 +43,10 @@ enum djbll_data_type {
 // Hash function.
 unsigned int djb_hash( struct h_table *ht, char *ptr, int length );
 // Function to find an item.
-struct h_node *djbll_find( struct h_table *ht, char *key );
+struct h_node *djbhash_find( struct h_table *ht, char *key );
 // Function to remove an item.
-int djbll_remove( struct h_table *ht, char *key );
+int djbhash_remove( struct h_table *ht, char *key );
 // Function to add/update an item.
-int djbll_set( struct h_table *ht, char *key, void *value, int data_type, ... );
+int djbhash_set( struct h_table *ht, char *key, void *value, int data_type, ... );
 // Function to print an element of the hash (based on data type).
-void djbll_print( struct h_node *item );
+void djbhash_print( struct h_node *item );

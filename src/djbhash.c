@@ -1,7 +1,7 @@
-#include "djbll.h"
+#include "djbhash.h"
 
 // Print an items' data.
-void djbll_print_value( struct h_node *item )
+void djbhash_print_value( struct h_node *item )
 {
   // Loop iterator for array values.
   int i;
@@ -35,15 +35,15 @@ void djbll_print_value( struct h_node *item )
 }
 
 // Print the key value pair.
-void djbll_print( struct h_node *item )
+void djbhash_print( struct h_node *item )
 {
   printf( "%s => ", item->key );
-  djbll_print_value( item );
+  djbhash_print_value( item );
   printf( "\n" );
 }
 
 // Initialize the hash table.
-void djbll_init( struct h_table *ht, int t_size )
+void djbhash_init( struct h_table *ht, int t_size )
 {
   int i;
 
@@ -69,7 +69,7 @@ unsigned int djb_hash( struct h_table *ht, char *key, int length )
 }
 
 // Set the value for an item in the hash table.
-int djbll_set( struct h_table *ht, char *key, void * value, int data_type, ... )
+int djbhash_set( struct h_table *ht, char *key, void * value, int data_type, ... )
 {
   int length;
   int index;
@@ -132,7 +132,7 @@ int djbll_set( struct h_table *ht, char *key, void * value, int data_type, ... )
 }
 
 // Find an item in the hash table.
-struct h_node *djbll_find( struct h_table *ht, char *key )
+struct h_node *djbhash_find( struct h_table *ht, char *key )
 {
   int length;
   struct h_node *searcher;
@@ -155,7 +155,7 @@ struct h_node *djbll_find( struct h_table *ht, char *key )
 }
 
 // Dump all data in the hash table.
-void djbll_dump( struct h_table *ht )
+void djbhash_dump( struct h_table *ht )
 {
   int i;
   struct h_node *iter;
@@ -163,12 +163,12 @@ void djbll_dump( struct h_table *ht )
   {
     iter = ht->ll[i];
     while ( iter )
-      djbll_print( iter );
+      djbhash_print( iter );
   }
 }
 
 // Remove all elements from the hash table.
-void djbll_empty( struct h_table *ht )
+void djbhash_empty( struct h_table *ht )
 {
   int i;
   struct h_node *iter;
@@ -191,9 +191,9 @@ void djbll_empty( struct h_table *ht )
 }
 
 // Remove all elements and frees memory used by the hash table.
-void djbll_destroy( struct h_table *ht )
+void djbhash_destroy( struct h_table *ht )
 {
-  djbll_empty( ht );
+  djbhash_empty( ht );
   free( ht->ll );
   ht->ll = NULL;
 }
