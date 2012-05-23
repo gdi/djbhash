@@ -4,71 +4,69 @@
 #### Initializing the hash table.
 ```c
   // The hash table object.
-  struct h_table ht;
+  struct djbhash hash;
 
-  // Initialize the hash table with a set number of linked lists (2 in this case).
-  // Typically, the 2 here should be about equal to the sqare root of the number of
-  //    items expected for good distribution.
-  djbhash_init( &ht, 2 );
+  // Initialize the hash.
+  djbhash_init( &hash );
 ```
 
 #### Adding an item to the hash.
 ```c
-  /* djbhash_set( <hash>, <key>, <value>, <data type>, <count (optional) >.
+  /* djbhash_set( &<hash>, <key>, <value>, <data type>, (<count> optional).
    *
    * Supported data types
    * =====================
-   *    DJBLL_INT => int
-   *    DJBLL_DOUBLE => double (or float)
-   *    DJBLL_CHAR => char
-   *    DJBLL_STRING => char *, const char *
-   *    DJBLL_ARRAY => int * (When used, must also pass the count parameter)
+   *    DJBHASH_INT => int
+   *    DJBHASH_DOUBLE => double (or float)
+   *    DJBHASH_CHAR => char
+   *    DJBHASH_STRING => char *, const char *
+   *    DJBHASH_ARRAY => int * (When used, must also pass the count parameter)
   */
 
   // Item with int value.
   int temp = ( 10 );
-  djbhash_set( &ht, "int", &temp, DJBLL_INT );
+  djbhash_set( &hash, "int", &temp, DJBHASH_INT );
 
   // Item with a double value.
   double temp2 = 3.14159;
-  djbhash_set( &ht, "double", &temp2, DJBLL_DOUBLE );
+  djbhash_set( &hash, "double", &temp2, DJBHASH_DOUBLE );
 
   // Item with a char value.
   char temp3 = 'a';
-  djbhash_set( &ht, "char", &temp3, DJBLL_CHAR );
+  djbhash_set( &hash, "char", &temp3, DJBHASH_CHAR );
 
   // Item with a string value.
-  djbhash_set( &ht, "string", "bar", DJBLL_STRING );
+  djbhash_set( &hash, "string", "bar", DJBHASH_STRING );
 
   // Item with an array value - notice the additional param.
   int temp_arr[] = { 8, 6, 7, 5, 3, 0, 9 };
-  djbhash_set( &ht, "array", temp_arr, DJBLL_ARRAY, 7 );
+  djbhash_set( &hash, "array", temp_arr, DJBHASH_ARRAY, 7 );
 ```
 
 #### Finding an item in the hash.
 ```c
   // Pointer to the hash item.
-  struct h_node *item;
+  struct djbhash_node *item;
   void *value;
 
   // Add an item to find.
-  djbhash_set( &ht, "foo", "bar", DJBLL_STRING );
+  djbhash_set( &hash, "foo", "bar", DJBHASH_STRING );
 
-  // Find and print an item.
-  item = djbhash_find( &ht, "foo" );
+  // Find and print the item.
+  item = djbhash_find( &hash, "foo" );
   value = item->value;
   djbhash_print( item );
 
   // Search for an item that doesn't exist:
   char *missing = "missing";
-  if ( ( item = djbhash_find( &ht, missing ) ) == NULL )
+  if ( ( item = djbhash_find( &hash, missing ) ) == NULL )
     printf( "%s: No such item!\n", missing );
 ```
 
 #### Cleanup:
 ```c
   // Remove all items and free memory.
-  djbhash_destroy( &ht );
+  djbhash_destroy( &hash );
 ```
 
 ### For a full example, see test.c.
