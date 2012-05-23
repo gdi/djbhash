@@ -11,4 +11,4 @@ clean:
 	rm -f djbhash
 
 test:
-	gcc -o djbhash test.c -ldjbhash
+	gcc -o djbhash test.c src/djbhash.c -Isrc/ -g
