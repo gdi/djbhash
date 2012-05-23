@@ -30,7 +30,7 @@ void djbhash_print_value( struct djbhash_node *item )
       printf( "%d", arr_ptr[item->count - 1] );
       break;
     default:
-      printf( "%s", ( char * )item->value );
+      printf( "Unknown data type.%s" );
   }
 }
 
@@ -102,6 +102,47 @@ int djbhash_bin_search( struct djbhash *hash, int min, int max, int bucket_id, c
   }
 }
 
+// Create our own memory for the item value so we don't have to worry about local values and such.
+void *djbhash_value( void *value, int data_type, int count )
+{
+  int i;
+  int *temp, *iter;
+  double *temp2;
+  void *ptr;
+
+  switch( data_type )
+  {
+    case DJBHASH_INT:
+      temp = malloc( sizeof( int ) );
+      *temp = *( int * )value;
+      ptr = temp;
+      break;
+    case DJBHASH_DOUBLE:
+      temp2 = malloc( sizeof( double ) );
+      *temp2 = *( double * )value;
+      ptr = temp2;
+      break;
+    case DJBHASH_CHAR:
+      temp = malloc( sizeof( char ) );
+      *temp = *( char * )value;
+      ptr = temp;
+      break;
+    case DJBHASH_STRING:
+      ptr = strdup( ( char * )value );
+      break;
+    case DJBHASH_ARRAY:
+      temp = malloc( sizeof( int ) * count );
+      iter = value;
+      for ( i = 0; i < count; i++ )
+        temp[i] = iter[i];
+      ptr = temp;
+      break;
+    default:
+      ptr = value;
+  }
+  return ptr;
+}
+
 // Set the value for an item in the hash table using array hash table.
 int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ... )
 {
@@ -116,7 +157,7 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
   int count;
 
   // Default invalid data types.
-  if ( data_type < DJBHASH_INT || data_type > DJBHASH_ARRAY )
+  if ( data_type < DJBHASH_INT || data_type > DJBHASH_OTHER )
     data_type = DJBHASH_STRING;
 
   // If the data type is an array, track how many items the array has.
@@ -136,8 +177,8 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
 
   // Create our hash item.
   temp = malloc( sizeof( struct djbhash_node ) );
-  temp->key = key;
-  temp->value = value;
+  temp->key = strdup( key );
+  temp->value = djbhash_value( value, data_type, count );
   temp->data_type = data_type;
   temp->count = count;
   temp->next = NULL;
@@ -163,12 +204,14 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
     }
   }
 
+  // Create the node and bucket, update an existing node, or append a node to the bucket.
   switch ( method )
   {
     case DJBHASH_UPDATE:
-      free( temp );
-      temp = NULL;
-      iter->value = value;
+      djbhash_free_node( temp );
+      free( iter->value );
+      iter->value = NULL;
+      iter->value = djbhash_value( value, data_type, count );
       break; 
     case DJBHASH_APPEND:
       iter->next = temp;
@@ -183,9 +226,12 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
       for ( i = hash->count; i > insert_pos; i-- )
         hash->buckets[i] = hash->buckets[i - 1];
 
+      // Finally, add this linked list and increment bucket count.
       hash->buckets[insert_pos].id = bucket_id;
       hash->buckets[insert_pos].list = temp;
       hash->count++;
+      break;
+    default:
       break;
   }
 }
@@ -240,6 +286,23 @@ void djbhash_dump( struct djbhash *hash )
   }
 }
 
+// Free memory used by a node.
+void djbhash_free_node( struct djbhash_node *item )
+{
+  if ( item->key != NULL )
+  {
+    free( item->key );
+    item->key = NULL;
+  }
+  if ( item->value != NULL && item->data_type != DJBHASH_OTHER )
+  {
+    free( item->value );
+    item->value = NULL;
+  }
+  free( item );
+  item = NULL;
+}
+
 // Remove all elements from the hash table.
 void djbhash_empty( struct djbhash *hash )
 {
@@ -249,10 +312,10 @@ void djbhash_empty( struct djbhash *hash )
   for ( i = 0; i < hash->count; i++ )
   {
     iter = hash->buckets[i].list;
-    while ( iter )
+    while ( iter != NULL )
     {
       next = iter->next;
-      free( iter );
+      djbhash_free_node( iter );
       iter = next;
     }
   }

@@ -1,5 +1,10 @@
 #include "djbhash.h"
 
+struct test_struct {
+  int a;
+  int b;
+};
+
 int main( int argc, char *argv[] )
 {
   // Hash table structure.
@@ -20,6 +25,10 @@ int main( int argc, char *argv[] )
   djbhash_set( &hash, "string", "bar", DJBHASH_STRING );
   int temp_arr[] = { 8, 6, 7, 5, 3, 0, 9 };
   djbhash_set( &hash, "array", temp_arr, DJBHASH_ARRAY, 7 );
+  struct test_struct test;
+  test.a = 10;
+  test.b = 11;
+  djbhash_set( &hash, "other", &test, DJBHASH_OTHER );
 
   // Find and print items.
   item = djbhash_find( &hash, "int" );
@@ -32,6 +41,9 @@ int main( int argc, char *argv[] )
   djbhash_print( item );
   item = djbhash_find( &hash, "array" );
   djbhash_print( item );
+  item = djbhash_find( &hash, "other" );
+  djbhash_print( item );
+
 
   // Search for an item that doesn't exist:
   char *missing = "missing key";

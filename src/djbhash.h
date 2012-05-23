@@ -50,6 +50,7 @@ enum djbhash_data_type {
   DJBHASH_CHAR,
   DJBHASH_STRING,
   DJBHASH_ARRAY,
+  DJBHASH_OTHER,
 };
 
 // Method to use when setting a hash item.
@@ -59,14 +60,15 @@ enum djbhash_method {
   DJBHASH_INSERT,
 };
 
-
 void djbhash_print_value( struct djbhash_node *item );
 void djbhash_print( struct djbhash_node *item );
 void djbhash_init( struct djbhash *hash );
 unsigned int djb_hash( char *key, int length );
 int djbhash_bin_search( struct djbhash *hash, int min, int max, int bucket_id, char *key, int length, int insert_mode );
+void *djbhash_value( void *value, int data_type, int count );
 int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ... );
 struct djbhash_node *djbhash_find( struct djbhash *hash, char *key );
 void djbhash_dump( struct djbhash *hash );
+void djbhash_free_node( struct djbhash_node *item );
 void djbhash_empty( struct djbhash *hash );
 void djbhash_destroy( struct djbhash *hash );
