@@ -21,6 +21,7 @@
    *    DJBHASH_CHAR => char
    *    DJBHASH_STRING => char *, const char *
    *    DJBHASH_ARRAY => int * (When used, must also pass the count parameter)
+   *    DJBHASH_OTHER => generic void *, use with caution!.
   */
 
   // Item with int value.
@@ -41,6 +42,13 @@
   // Item with an array value - notice the additional param.
   int temp_arr[] = { 8, 6, 7, 5, 3, 0, 9 };
   djbhash_set( &hash, "array", temp_arr, DJBHASH_ARRAY, 7 );
+
+  // Item with a different data type.
+  //   suppose you declared: struct test_struct { int a; int b; };
+  struct test_struct test;
+  test.a = 10;
+  test.b = 5;
+  djbhash_set( &hash, "other", test, DJBHASH_OTHER );
 ```
 
 #### Finding an item in the hash.
