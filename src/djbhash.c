@@ -251,11 +251,6 @@ void djbhash_empty( struct djbhash *hash )
     iter = hash->buckets[i].list;
     while ( iter )
     {
-      if ( iter->key != NULL )
-      {
-        free( iter->key );
-        iter->key = NULL;
-      }
       next = iter->next;
       free( iter );
       iter = next;
