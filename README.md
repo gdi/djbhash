@@ -1,4 +1,4 @@
-##djbhash - A simple hash table implementation using the DJB string hashing function.
+##djbhash - A simple c hash implementation using the DJB string hashing function.
 
 ### Usage:
 #### Initializing the hash table.
