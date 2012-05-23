@@ -8,18 +8,18 @@ int main( int argc, char *argv[] )
   struct h_node *item;
 
   // Initialize the hash table with 5 linked lists.
-  djbhash_init( &ht, 5 );
+  djbhash_init( &ht, 5, DJBHASH_LINKED_LIST );
 
   // Set hash values with various data types.
   int temp = 10;
-  djbhash_set( &ht, "int", &temp, DJBLL_INT );
+  djbhash_set( &ht, "int", &temp, DJBHASH_INT );
   double temp2 = 3.14159;
-  djbhash_set( &ht, "double", &temp2, DJBLL_DOUBLE );
+  djbhash_set( &ht, "double", &temp2, DJBHASH_DOUBLE );
   char temp3 = 'a';
-  djbhash_set( &ht, "char", &temp3, DJBLL_CHAR );
-  djbhash_set( &ht, "string", "bar", DJBLL_STRING );
+  djbhash_set( &ht, "char", &temp3, DJBHASH_CHAR );
+  djbhash_set( &ht, "string", "bar", DJBHASH_STRING );
   int temp_arr[] = { 8, 6, 7, 5, 3, 0, 9 };
-  djbhash_set( &ht, "array", temp_arr, DJBLL_ARRAY, 7 );
+  djbhash_set( &ht, "array", temp_arr, DJBHASH_ARRAY, 7 );
 
   // Find and print items.
   item = djbhash_find( &ht, "int" );
