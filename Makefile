@@ -1,6 +1,6 @@
 all:
-	gcc -o obj/djbll.o -fPIC -c src/djbll.c
-	gcc -shared -o obj/libdjbll.so obj/djbll.o
+	gcc -o obj/djbhash.o -fPIC -c src/djbhash.c
+	gcc -shared -o obj/libdjbhash.so obj/djbhash.o
 
 install:
 	cp obj/*.so /usr/local/lib
@@ -8,7 +8,7 @@ install:
 
 clean:
 	rm -f obj/*
-	rm -f djbll
+	rm -f djbhash
 
 test:
-	gcc -o djbll test.c -ldjbll
+	gcc -o djbhash test.c -ldjbhash
