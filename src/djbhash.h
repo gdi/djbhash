@@ -10,7 +10,7 @@
   #define false 0
 #endif
 
-#define DJBHASH_CHUNK_SIZE 256
+#define DJBHASH_CHUNK_SIZE 8
 #define DJBHASH_MAX_BUCKETS 65536
 
 // Node structure
