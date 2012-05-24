@@ -74,6 +74,7 @@ enum djbhash_method {
   DJBHASH_INSERT,
 };
 
+// Function declarations.
 void djbhash_print_value( struct djbhash_node *item );
 void djbhash_print( struct djbhash_node *item );
 void djbhash_init( struct djbhash *hash );
@@ -82,6 +83,7 @@ struct djbhash_search djbhash_bin_search( struct djbhash *hash, int min, int max
 void *djbhash_value( void *value, int data_type, int count );
 int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ... );
 struct djbhash_node *djbhash_find( struct djbhash *hash, char *key );
+int djbhash_remove( struct djbhash *hash, char *key );
 void djbhash_dump( struct djbhash *hash );
 void djbhash_free_node( struct djbhash_node *item );
 void djbhash_empty( struct djbhash *hash );
