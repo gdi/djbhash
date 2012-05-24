@@ -71,6 +71,13 @@
     printf( "%s: No such item!\n", missing );
 ```
 
+### Removing an item in the hash.
+```c
+  djbhash_remove( &hash, "int" );
+  if ( djbhash_find( &hash, "int" ) == NULL )
+    printf( "item removedn" );
+```
+
 #### Cleanup:
 ```c
   // Remove all items and free memory.
