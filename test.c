@@ -44,6 +44,10 @@ int main( int argc, char *argv[] )
   item = djbhash_find( &hash, "other" );
   djbhash_print( item );
 
+  // Remove an item.
+  djbhash_remove( &hash, "int" );
+  if ( djbhash_find( &hash, "int" ) == NULL )
+    printf( "int removed\n" );
 
   // Search for an item that doesn't exist:
   char *missing = "missing key";
