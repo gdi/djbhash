@@ -62,44 +62,58 @@ unsigned int djb_hash( char *key, int length )
 }
 
 // Find the bucket for the element.
-int djbhash_bin_search( struct djbhash *hash, int min, int max, int bucket_id, char *key, int length, int insert_mode )
+struct djbhash_search djbhash_bin_search( struct djbhash *hash, int min, int max, int bucket_id, char *key, int length )
 {
   // Mid-point for search.
   int mid;
-  // Linked list iterator.
-  struct djbhash_node *iter;
+  // Linked list iterator and parent node.
+  struct djbhash_node *iter, *parent;
+  // Return variable.
+  struct djbhash_search pos;
 
+  // If max is less than min, we didn't find it.
   if ( max < min )
   {
-    if ( insert_mode )
-      return min;
-    else
-      return -1;
+    pos.bucket_id = min;
+    pos.found = false;
+    pos.collision = false;
+    pos.item = NULL;
+    pos.parent = NULL;
+    return pos;
   }
 
   mid = ( min + max ) / 2;
   if ( hash->buckets[mid].id > bucket_id )
-    return djbhash_bin_search( hash, min, mid - 1, bucket_id, key, length, insert_mode );
+    return djbhash_bin_search( hash, min, mid - 1, bucket_id, key, length );
   else if ( hash->buckets[mid].id < bucket_id )
-    return djbhash_bin_search( hash, mid + 1, max, bucket_id, key, length, insert_mode );
-  else
-  {
-    // Point our iterator to the first element in this bucket.
-    iter = hash->buckets[mid].list;
-    while ( iter )
-    {
-      // We want to return if the key in the linked list actually matches.
-      if ( strncmp( iter->key, key, length ) == 0 )
-        return mid;
-      iter = iter->next;
-    }
+    return djbhash_bin_search( hash, mid + 1, max, bucket_id, key, length );
 
-    // If we got here, there the item doesn't actually exist, it's just a hash collision.
-    if ( insert_mode )
-      return mid;
-    else
-      return -1;
+  // Point our iterator to the first element in this bucket.
+  iter = hash->buckets[mid].list;
+  parent = iter;
+  while ( iter )
+  {
+    // We want to return if the key in the linked list actually matches.
+    if ( strncmp( iter->key, key, length ) == 0 )
+    {
+      pos.bucket_id = mid;
+      pos.found = true;
+      pos.collision = true;
+      pos.item = iter;
+      pos.parent = parent;
+      return pos;
+    }
+    parent = iter;
+    iter = iter->next;
   }
+
+  // If we got here, there the item doesn't actually exist, it's just a hash collision.
+  pos.bucket_id = mid;
+  pos.found = false;
+  pos.collision = true;
+  pos.item = NULL;
+  pos.parent = parent;
+  return pos;
 }
 
 // Create our own memory for the item value so we don't have to worry about local values and such.
@@ -148,7 +162,7 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
 {
   int i;
   int chunks;
-  int insert_pos;
+  struct djbhash_search search;
   unsigned int bucket_id;
   int length;
   va_list arg_ptr;
@@ -172,8 +186,16 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
   length = strlen( key );
   bucket_id = djb_hash( key, length );
 
-  // Find out which bucket this item belongs to.
-  insert_pos = djbhash_bin_search( hash, 0, hash->count - 1, bucket_id, key, length, true );
+  // Find our insert/update/append position.
+  search = djbhash_bin_search( hash, 0, hash->count - 1, bucket_id, key, length );
+
+  // If we found the item with this key, we need to just update it.
+  if ( search.found )
+  {
+    free( search.item->value );
+    search.item->value = djbhash_value( value, data_type, count );
+    return true;
+  }
 
   // Create our hash item.
   temp = malloc( sizeof( struct djbhash_node ) );
@@ -183,56 +205,28 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
   temp->count = count;
   temp->next = NULL;
 
-  // Find out if we are inserting, updating, or creating this item.
-  method = DJBHASH_INSERT;
-  if ( insert_pos < hash->count )
+  // If it's a hash collision, append it to the list.
+  if ( search.collision )
   {
-    // Check if we're doing an insert or an update.
-    if ( bucket_id == hash->buckets[insert_pos].id )
-    {
-      method = DJBHASH_APPEND;
-      iter = hash->buckets[insert_pos].list;
-      while ( iter->next != NULL )
-      {
-        if ( strncmp( iter->key, key, length ) == 0 )
-        {
-          method = DJBHASH_UPDATE;
-          break;
-        }
-        iter = iter->next;
-      }
-    }
-  }
-
-  // Create the node and bucket, update an existing node, or append a node to the bucket.
-  switch ( method )
+    if ( search.parent == NULL )
+      hash->buckets[search.bucket_id].list = temp;
+    else
+      search.parent->next = temp;
+  } else
   {
-    case DJBHASH_UPDATE:
-      djbhash_free_node( temp );
-      free( iter->value );
-      iter->value = NULL;
-      iter->value = djbhash_value( value, data_type, count );
-      break; 
-    case DJBHASH_APPEND:
-      iter->next = temp;
-      break;
-    case DJBHASH_INSERT:
-      // See if we need more memory.
-      chunks = hash->count / DJBHASH_CHUNK_SIZE + 1;
-      if ( hash->count > 0 && hash->count % DJBHASH_CHUNK_SIZE == 0 )
-        hash->buckets = realloc( hash->buckets, sizeof( struct djbhash_bucket ) * ( ( chunks + 1 ) * DJBHASH_CHUNK_SIZE ) );
+    // See if we need more memory.
+    chunks = hash->count / DJBHASH_CHUNK_SIZE + 1;
+    if ( hash->count > 0 && hash->count % DJBHASH_CHUNK_SIZE == 0 )
+      hash->buckets = realloc( hash->buckets, sizeof( struct djbhash_bucket ) * ( ( chunks + 1 ) * DJBHASH_CHUNK_SIZE ) );
 
-      // Move all of the larger elements over.
-      for ( i = hash->count; i > insert_pos; i-- )
-        hash->buckets[i] = hash->buckets[i - 1];
+    // Move all of the larger elements over.
+    for ( i = hash->count; i > search.bucket_id; i-- )
+      hash->buckets[i] = hash->buckets[i - 1];
 
-      // Finally, add this linked list and increment bucket count.
-      hash->buckets[insert_pos].id = bucket_id;
-      hash->buckets[insert_pos].list = temp;
-      hash->count++;
-      break;
-    default:
-      break;
+    // Finally, add this linked list and increment bucket count.
+    hash->buckets[search.bucket_id].id = bucket_id;
+    hash->buckets[search.bucket_id].list = temp;
+    hash->count++;
   }
 }
 
@@ -241,32 +235,43 @@ struct djbhash_node *djbhash_find( struct djbhash *hash, char *key )
 {
   int length;
   int bucket_id;
-  int position;
+  struct djbhash_search search;
   struct djbhash_node *searcher;
 
   length = strlen( key );
   bucket_id = djb_hash( key, length );
-  position = djbhash_bin_search( hash, 0, hash->count - 1, bucket_id, key, length, false );
+  search = djbhash_bin_search( hash, 0, hash->count - 1, bucket_id, key, length );
+  return search.item;
+}
 
-  // If we don't find the bucket ID, obviously it doesn't exist.
-  if ( position == -1 )
-    return NULL;
+// Remove an item from the hash.
+int djbhash_remove( struct djbhash *hash, char *key )
+{
+  int length;
+  int bucket_id;
+  struct djbhash_search search;
+  struct djbhash_node *item, *parent, *next;
 
-  // Otherwise, search through the linked list to find the item.
-  searcher = hash->buckets[position].list;
+  length = strlen( key );
+  bucket_id = djb_hash( key, length );
+  search = djbhash_bin_search( hash, 0, hash->count - 1, bucket_id, key, length );
 
-  // Make sure this list isn't empty first.
-  if ( searcher == NULL )
-    return NULL;
+  // If we don't find the item, we obviously can't remove it.
+  if ( !search.found )
+    return false;
 
-  // Iterate through the list and try to find the item.
-  while ( searcher )
-  {
-    if ( strncmp( searcher->key, key, length ) == 0 )
-      return searcher;
-    searcher = searcher->next;
-  }
-  return NULL;
+  // Otherwise, free the item, and set the parent node's next to the item's next.
+  item = search.item;
+  parent = search.parent;
+  next = search.item->next;
+
+  if ( parent == item )
+    hash->buckets[search.bucket_id].list = next;
+  else
+    parent->next = next;
+
+  djbhash_free_node( search.item );
+  return true;
 }
 
 // Dump all data in the hash table using linked lists.
@@ -320,7 +325,7 @@ void djbhash_empty( struct djbhash *hash )
     }
   }
   free( hash->buckets );
-  hash->buckets = malloc( sizeof( struct djbhash_bucket ) );
+  hash->buckets = malloc( sizeof( struct djbhash_bucket ) * DJBHASH_CHUNK_SIZE );
   hash->count = 0;
 }
 
