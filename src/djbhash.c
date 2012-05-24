@@ -45,8 +45,13 @@ void djbhash_print( struct djbhash_node *item )
 // Initialize the hash table.
 void djbhash_init( struct djbhash *hash )
 {
-  hash->buckets = malloc( sizeof( struct djbhash_bucket ) * DJBHASH_CHUNK_SIZE );
-  hash->count = 0;
+  int i;
+  hash->buckets = malloc( sizeof( struct djbhash_bucket ) * DJBHASH_MAX_BUCKETS );
+  for ( i = 0; i < DJBHASH_MAX_BUCKETS; i++ )
+  {
+    hash->buckets[i].id = i;
+    hash->buckets[i].list = NULL;
+  }
 }
 
 // DJB Hash function.
@@ -187,7 +192,7 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
   bucket_id = djb_hash( key, length );
 
   // Find our insert/update/append position.
-  search = djbhash_bin_search( hash, 0, hash->count - 1, bucket_id, key, length );
+  search = djbhash_bin_search( hash, 0, DJBHASH_MAX_BUCKETS - 1, bucket_id, key, length );
 
   // If we found the item with this key, we need to just update it.
   if ( search.found )
@@ -214,19 +219,7 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
       search.parent->next = temp;
   } else
   {
-    // See if we need more memory.
-    chunks = hash->count / DJBHASH_CHUNK_SIZE + 1;
-    if ( hash->count > 0 && hash->count % DJBHASH_CHUNK_SIZE == 0 )
-      hash->buckets = realloc( hash->buckets, sizeof( struct djbhash_bucket ) * ( ( chunks + 1 ) * DJBHASH_CHUNK_SIZE ) );
-
-    // Move all of the larger elements over.
-    for ( i = hash->count; i > search.bucket_id; i-- )
-      hash->buckets[i] = hash->buckets[i - 1];
-
-    // Finally, add this linked list and increment bucket count.
-    hash->buckets[search.bucket_id].id = bucket_id;
     hash->buckets[search.bucket_id].list = temp;
-    hash->count++;
   }
 }
 
@@ -240,7 +233,7 @@ struct djbhash_node *djbhash_find( struct djbhash *hash, char *key )
 
   length = strlen( key );
   bucket_id = djb_hash( key, length );
-  search = djbhash_bin_search( hash, 0, hash->count - 1, bucket_id, key, length );
+  search = djbhash_bin_search( hash, 0, DJBHASH_MAX_BUCKETS - 1, bucket_id, key, length );
   return search.item;
 }
 
@@ -254,7 +247,7 @@ int djbhash_remove( struct djbhash *hash, char *key )
 
   length = strlen( key );
   bucket_id = djb_hash( key, length );
-  search = djbhash_bin_search( hash, 0, hash->count - 1, bucket_id, key, length );
+  search = djbhash_bin_search( hash, 0, DJBHASH_MAX_BUCKETS - 1, bucket_id, key, length );
 
   // If we don't find the item, we obviously can't remove it.
   if ( !search.found )
@@ -280,7 +273,7 @@ void djbhash_dump( struct djbhash *hash )
   int i;
   struct djbhash_node *iter;
 
-  for ( i = 0; i < hash->count; i++ )
+  for ( i = 0; i < DJBHASH_MAX_BUCKETS; i++ )
   {
     iter = hash->buckets[i].list;
     while ( iter )
@@ -314,7 +307,7 @@ void djbhash_empty( struct djbhash *hash )
   int i;
   struct djbhash_node *iter;
   struct djbhash_node *next;
-  for ( i = 0; i < hash->count; i++ )
+  for ( i = 0; i < DJBHASH_MAX_BUCKETS; i++ )
   {
     iter = hash->buckets[i].list;
     while ( iter != NULL )
@@ -324,9 +317,6 @@ void djbhash_empty( struct djbhash *hash )
       iter = next;
     }
   }
-  free( hash->buckets );
-  hash->buckets = malloc( sizeof( struct djbhash_bucket ) * DJBHASH_CHUNK_SIZE );
-  hash->count = 0;
 }
 
 // Remove all elements and frees memory used by the hash table.

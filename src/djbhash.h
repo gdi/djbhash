@@ -10,7 +10,6 @@
   #define false 0
 #endif
 
-#define DJBHASH_CHUNK_SIZE 8
 #define DJBHASH_MAX_BUCKETS 65536
 
 // Node structure
@@ -39,8 +38,6 @@ struct djbhash_bucket {
 struct djbhash {
   // Buckets.
   struct djbhash_bucket *buckets;
-  // Number of buckets.
-  int count;
 };
 
 // Position when searching for an item.
