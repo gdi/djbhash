@@ -23,7 +23,7 @@ int main( int argc, char *argv[] )
   char temp3 = 'a';
   djbhash_set( &hash, "char", &temp3, DJBHASH_CHAR );
   djbhash_set( &hash, "string", "bar", DJBHASH_STRING );
-  int temp_arr[] = { 18, 6, 7, 5, 3, 0, -9219 };
+  int temp_arr[] = { 8, 6, 7, 5, 3, 0, 9 };
   djbhash_set( &hash, "array", temp_arr, DJBHASH_ARRAY, 7 );
   struct djbhash temp_hash;
   djbhash_init( &temp_hash );

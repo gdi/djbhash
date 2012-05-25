@@ -21,6 +21,7 @@
    *    DJBHASH_CHAR => char
    *    DJBHASH_STRING => char *, const char *
    *    DJBHASH_ARRAY => int * (When used, must also pass the count parameter)
+   *    DJBHASH_HASH => another djbhash object.
    *    DJBHASH_OTHER => generic void *, use with caution!.
   */
 
@@ -42,6 +43,13 @@
   // Item with an array value - notice the additional param.
   int temp_arr[] = { 8, 6, 7, 5, 3, 0, 9 };
   djbhash_set( &hash, "array", temp_arr, DJBHASH_ARRAY, 7 );
+
+  // An embedded hash within this hash.
+  struct djbhash temp_hash;
+  djbhash_init( &temp_hash );
+  djbhash_set( &temp_hash, "foo", "bar", DJBHASH_STRING );
+  djbhash_set( &temp_hash, "baz", temp_arr, DJBHASH_ARRAY, 7 );
+  djbhash_set( &hash, "hash", &temp_hash, DJBHASH_HASH );
 
   // Item with a different data type.
   //   suppose you declared: struct test_struct { int a; int b; };
@@ -91,6 +99,14 @@
     djbhash_print( item );
     item = djbhash_iterate( &hash );
   }
+```
+
+### Getting a JSON formated string of the hash.
+```c
+  char *json = djbhash_to_json( &hash );
+  printf( "JSON: %s\n", json );
+  free( json );
+  json = NULL;
 ```
 
 ### Reset the iterator to the first item.
