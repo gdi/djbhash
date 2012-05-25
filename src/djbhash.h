@@ -26,6 +26,16 @@ struct djbhash_node {
   struct djbhash_node *next;
 };
 
+// Iterator object.
+struct djbhash_iterator {
+  // Active ID.
+  int id;
+  // Node pointer.
+  struct djbhash_node *node;
+  // Last pointer.
+  struct djbhash_node *last;
+};
+
 // Linked list bucket structure.
 struct djbhash_bucket {
   // Bucket ID.
@@ -38,6 +48,12 @@ struct djbhash_bucket {
 struct djbhash {
   // Buckets.
   struct djbhash_bucket *buckets;
+  // List of active buckets.
+  int *active;
+  // Number of active buckets.
+  int active_count;
+  // Iterator to get through all elements.
+  struct djbhash_iterator iter;
 };
 
 // Position when searching for an item.
@@ -64,13 +80,6 @@ enum djbhash_data_type {
   DJBHASH_OTHER,
 };
 
-// Method to use when setting a hash item.
-enum djbhash_method {
-  DJBHASH_APPEND,
-  DJBHASH_UPDATE,
-  DJBHASH_INSERT,
-};
-
 // Function declarations.
 void djbhash_print_value( struct djbhash_node *item );
 void djbhash_print( struct djbhash_node *item );
@@ -82,6 +91,8 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
 struct djbhash_node *djbhash_find( struct djbhash *hash, char *key );
 int djbhash_remove( struct djbhash *hash, char *key );
 void djbhash_dump( struct djbhash *hash );
+struct djbhash_node *djbhash_iterate( struct djbhash *hash );
+void djbhash_reset_iterator( struct djbhash *hash );
 void djbhash_free_node( struct djbhash_node *item );
 void djbhash_empty( struct djbhash *hash );
 void djbhash_destroy( struct djbhash *hash );

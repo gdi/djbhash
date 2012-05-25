@@ -47,6 +47,11 @@ void djbhash_init( struct djbhash *hash )
 {
   int i;
   hash->buckets = malloc( sizeof( struct djbhash_bucket ) * DJBHASH_MAX_BUCKETS );
+  hash->active = malloc( sizeof( int ) * DJBHASH_MAX_BUCKETS );
+  hash->active_count = 0;
+  hash->iter.node = NULL;
+  hash->iter.last = NULL;
+  hash->iter.id = 0;
   for ( i = 0; i < DJBHASH_MAX_BUCKETS; i++ )
   {
     hash->buckets[i].id = i;
@@ -81,7 +86,6 @@ struct djbhash_search djbhash_bin_search( struct djbhash *hash, int min, int max
   {
     pos.bucket_id = min;
     pos.found = false;
-    pos.collision = false;
     pos.item = NULL;
     pos.parent = NULL;
     return pos;
@@ -103,7 +107,6 @@ struct djbhash_search djbhash_bin_search( struct djbhash *hash, int min, int max
     {
       pos.bucket_id = mid;
       pos.found = true;
-      pos.collision = true;
       pos.item = iter;
       pos.parent = parent;
       return pos;
@@ -115,7 +118,6 @@ struct djbhash_search djbhash_bin_search( struct djbhash *hash, int min, int max
   // If we got here, there the item doesn't actually exist, it's just a hash collision.
   pos.bucket_id = mid;
   pos.found = false;
-  pos.collision = true;
   pos.item = NULL;
   pos.parent = parent;
   return pos;
@@ -125,15 +127,16 @@ struct djbhash_search djbhash_bin_search( struct djbhash *hash, int min, int max
 void *djbhash_value( void *value, int data_type, int count )
 {
   int i;
-  int *temp, *iter;
+  long *temp, *iter;
   double *temp2;
+  unsigned char *temp3;
   void *ptr;
 
   switch( data_type )
   {
     case DJBHASH_INT:
-      temp = malloc( sizeof( int ) );
-      *temp = *( int * )value;
+      temp = malloc( sizeof( long ) );
+      *temp = *( long * )value;
       ptr = temp;
       break;
     case DJBHASH_DOUBLE:
@@ -142,15 +145,15 @@ void *djbhash_value( void *value, int data_type, int count )
       ptr = temp2;
       break;
     case DJBHASH_CHAR:
-      temp = malloc( sizeof( char ) );
-      *temp = *( char * )value;
-      ptr = temp;
+      temp3 = malloc( sizeof( unsigned char ) );
+      *temp3 = *( unsigned char * )value;
+      ptr = temp3;
       break;
     case DJBHASH_STRING:
-      ptr = strdup( ( char * )value );
+      ptr = strdup( ( unsigned char * )value );
       break;
     case DJBHASH_ARRAY:
-      temp = malloc( sizeof( int ) * count );
+      temp = malloc( sizeof( long ) * count );
       iter = value;
       for ( i = 0; i < count; i++ )
         temp[i] = iter[i];
@@ -210,16 +213,14 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
   temp->count = count;
   temp->next = NULL;
 
-  // If it's a hash collision, append it to the list.
-  if ( search.collision )
-  {
-    if ( search.parent == NULL )
-      hash->buckets[search.bucket_id].list = temp;
-    else
-      search.parent->next = temp;
-  } else
+  if ( search.parent == NULL )
   {
     hash->buckets[search.bucket_id].list = temp;
+    hash->active_count++;
+    hash->active[hash->active_count - 1] = search.bucket_id;
+  } else
+  {
+    search.parent->next = temp;
   }
 }
 
@@ -240,6 +241,7 @@ struct djbhash_node *djbhash_find( struct djbhash *hash, char *key )
 // Remove an item from the hash.
 int djbhash_remove( struct djbhash *hash, char *key )
 {
+  int i, offset;
   int length;
   int bucket_id;
   struct djbhash_search search;
@@ -259,9 +261,25 @@ int djbhash_remove( struct djbhash *hash, char *key )
   next = search.item->next;
 
   if ( parent == item )
+  {
     hash->buckets[search.bucket_id].list = next;
-  else
+    if ( hash->buckets[search.bucket_id].list == NULL )
+    {
+      offset = 0;
+      // Remove this from active buckets.
+      for ( i = 0; i < hash->active_count; i++ )
+      {
+        if ( hash->active[i] == search.bucket_id )
+          offset = 1;
+        else
+          hash->active[i - offset] = hash->active[i];
+      }
+      hash->active_count--;
+    }
+  } else
+  {
     parent->next = next;
+  }
 
   djbhash_free_node( search.item );
   return true;
@@ -273,15 +291,49 @@ void djbhash_dump( struct djbhash *hash )
   int i;
   struct djbhash_node *iter;
 
-  for ( i = 0; i < DJBHASH_MAX_BUCKETS; i++ )
+  for ( i = 0; i < hash->active_count; i++ )
   {
-    iter = hash->buckets[i].list;
+    iter = hash->buckets[hash->active[i]].list;
     while ( iter )
     {
       djbhash_print( iter );
       iter = iter->next;
     }
   }
+}
+
+// Iterate through all hash items one at a time.
+struct djbhash_node *djbhash_iterate( struct djbhash *hash )
+{
+  if ( hash->iter.node == NULL && hash->iter.last == NULL )
+  {
+    if ( hash->active_count > 0 )
+    {
+      hash->iter.node = hash->buckets[hash->active[0]].list;
+      return hash->iter.node;
+    }
+    return NULL;
+  } else if ( hash->iter.node == NULL )
+    return NULL;
+
+  hash->iter.last = hash->iter.node;
+  hash->iter.node = hash->iter.node->next;
+  if ( hash->iter.node == NULL )
+  {
+    if ( hash->iter.id == hash->active_count - 1 )
+      return NULL;
+    hash->iter.id++;
+    hash->iter.node = hash->buckets[hash->active[hash->iter.id]].list;
+  }
+  return hash->iter.node;
+}
+
+// Reset iterator.
+void djbhash_reset_iterator( struct djbhash *hash )
+{
+  hash->iter.id = 0;
+  hash->iter.node = NULL;
+  hash->iter.last = NULL;
 }
 
 // Free memory used by a node.
@@ -307,9 +359,9 @@ void djbhash_empty( struct djbhash *hash )
   int i;
   struct djbhash_node *iter;
   struct djbhash_node *next;
-  for ( i = 0; i < DJBHASH_MAX_BUCKETS; i++ )
+  for ( i = 0; i < hash->active_count; i++ )
   {
-    iter = hash->buckets[i].list;
+    iter = hash->buckets[hash->active[i]].list;
     while ( iter != NULL )
     {
       next = iter->next;
@@ -317,6 +369,7 @@ void djbhash_empty( struct djbhash *hash )
       iter = next;
     }
   }
+  hash->active_count = 0;
 }
 
 // Remove all elements and frees memory used by the hash table.
@@ -325,4 +378,6 @@ void djbhash_destroy( struct djbhash *hash )
   djbhash_empty( hash );
   free( hash->buckets );
   hash->buckets = NULL;
+  free( hash->active );
+  hash->active = NULL;
 }
