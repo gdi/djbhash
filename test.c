@@ -23,8 +23,13 @@ int main( int argc, char *argv[] )
   char temp3 = 'a';
   djbhash_set( &hash, "char", &temp3, DJBHASH_CHAR );
   djbhash_set( &hash, "string", "bar", DJBHASH_STRING );
-  int temp_arr[] = { 8, 6, 7, 5, 3, 0, 9 };
+  int temp_arr[] = { 18, 6, 7, 5, 3, 0, -9219 };
   djbhash_set( &hash, "array", temp_arr, DJBHASH_ARRAY, 7 );
+  struct djbhash temp_hash;
+  djbhash_init( &temp_hash );
+  djbhash_set( &temp_hash, "foo", "bar", DJBHASH_STRING );
+  djbhash_set( &temp_hash, "baz", temp_arr, DJBHASH_ARRAY, 7 );
+  djbhash_set( &hash, "hash", &temp_hash, DJBHASH_HASH );
   struct test_struct test;
   test.a = 10;
   test.b = 11;
@@ -41,6 +46,8 @@ int main( int argc, char *argv[] )
   item = djbhash_find( &hash, "string" );
   djbhash_print( item );
   item = djbhash_find( &hash, "array" );
+  djbhash_print( item );
+  item = djbhash_find( &hash, "hash" );
   djbhash_print( item );
   item = djbhash_find( &hash, "other" );
   djbhash_print( item );
@@ -72,7 +79,14 @@ int main( int argc, char *argv[] )
   if ( ( item = djbhash_find( &hash, missing ) ) == NULL )
     printf( "%s: No such item!\n", missing );
 
+  // Printing a hash as JSON.
+  char *json = djbhash_to_json( &hash );
+  printf( "\nHash to json: %s\n", json );
+  free( json );
+  json = NULL;
+
   // Remove all items and free memory.
+  djbhash_destroy( &temp_hash );
   djbhash_destroy( &hash );
 
   return 0;

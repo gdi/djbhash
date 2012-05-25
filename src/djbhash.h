@@ -77,6 +77,7 @@ enum djbhash_data_type {
   DJBHASH_CHAR,
   DJBHASH_STRING,
   DJBHASH_ARRAY,
+  DJBHASH_HASH,
   DJBHASH_OTHER,
 };
 
@@ -96,3 +97,4 @@ void djbhash_reset_iterator( struct djbhash *hash );
 void djbhash_free_node( struct djbhash_node *item );
 void djbhash_empty( struct djbhash *hash );
 void djbhash_destroy( struct djbhash *hash );
+unsigned char *djbhash_to_json( struct djbhash *hash );

@@ -1,37 +1,215 @@
 #include "djbhash.h"
 
-// Print an items' data.
-void djbhash_print_value( struct djbhash_node *item )
+// Convert an integer to string.
+unsigned char *djbhash_int_to_a( int number )
 {
-  // Loop iterator for array values.
-  int i;
-  // Pointer to integer array.
-  int *arr_ptr;
+  unsigned char *ascii;
+  ascii = calloc( 32, sizeof( unsigned char ) );
+  sprintf( ascii, "%d", number );
+  return ascii;
+}
 
-  // Print the value depending on data type.
+// Convert a double into a string.
+unsigned char *djbhash_double_to_a( double number )
+{
+  unsigned char *ascii;
+  ascii = calloc( 32, sizeof( unsigned char ) );
+  sprintf( ascii, "%f", number );
+  return ascii;
+}
+
+// Return a JSON formated array string.
+unsigned char *djbhash_json_array( int *array, int count )
+{
+  int i, j;
+  int digits, digit, value;
+  unsigned char *json;
+  unsigned char *part;
+  unsigned int length, pos, size;
+
+  json = calloc( 3, sizeof( unsigned char ) );
+  json[0] = '[';
+  pos = 1;
+  size = 1;
+  for ( i = 0; i < count; i++ )
+  {
+    part = djbhash_int_to_a( array[i] );
+    length = strlen( part );
+    size += length + 2;
+    json = realloc( json, sizeof( unsigned char ) * size );
+    for ( j = pos; j < size; j++ )
+      json[j] = '\0';
+
+    for ( j = 0; j < length; j++ )
+      json[j + pos] = part[j];
+    pos += length;
+
+    if ( i < count - 1 )
+      json[pos++] = ',';
+    free( part );
+    part = NULL;
+  }
+  json[pos] = ']';
+  return json;
+}
+
+// Return an escaped version of a string.
+unsigned char *djbhash_escaped( unsigned char *data )
+{
+  unsigned char *escaped;
+  unsigned char *ptr;
+  int iter;
+
+  escaped = calloc( strlen( data ) * 2 + 2, sizeof( unsigned char ) );
+  escaped[0] = '"';
+  iter = 1;
+  ptr = data;
+  while ( *ptr != '\0' )
+  {
+    switch ( *ptr )
+    {
+      case '\n':
+        escaped[iter++] = '\\';
+        escaped[iter++] = 'n';
+        break;
+      case '\t':
+        escaped[iter++] = '\\';
+        escaped[iter++] = 't';
+        break;
+      case '\r':
+        escaped[iter++] = '\\';
+        escaped[iter++] = 'r';
+        break;
+      case '\f':
+        escaped[iter++] = '\\';
+        escaped[iter++] = 'f';
+        break;
+      case '"':
+        escaped[iter++] = '\\';
+        escaped[iter++] = '"';
+        break;
+      case '\\':
+        escaped[iter++] = '\\';
+        escaped[iter++] = '\\';
+        break;
+      default:
+        escaped[iter++] = *ptr;
+        break;
+    }
+    *ptr++;
+  }
+  escaped[iter] = '"';
+  return escaped;
+}
+
+// Print an item in JSON format.
+unsigned char *djbhash_value_to_json( struct djbhash_node *item )
+{
+  int i;
+  int *arr_ptr;
+  unsigned char *json, *str;
+
   switch ( item->data_type )
   {
     case DJBHASH_INT:
-      printf( "%d", *( int * )item->value );
+      json = djbhash_int_to_a( *( int * )item->value );
       break;
     case DJBHASH_DOUBLE:
-      printf( "%f", *( double * )item->value );
+      json = djbhash_double_to_a( *( double * )item->value );
       break;
     case DJBHASH_CHAR:
-      printf( "%c", *( char * )item->value );
+      str = calloc( 2, sizeof( unsigned char ) );
+      str[0] = *( unsigned char * )item->value;
+      json = djbhash_escaped( str );
+      free( str );
+      str = NULL;
       break;
     case DJBHASH_STRING:
-      printf( "%s", ( char * )item->value );
+      json = djbhash_escaped( ( unsigned char * )item->value );
       break;
     case DJBHASH_ARRAY:
-      arr_ptr = item->value;
-      for ( i = 0; i < item->count - 1; i++ )
-        printf( "%d, ", arr_ptr[i] );
-      printf( "%d", arr_ptr[item->count - 1] );
+      json = djbhash_json_array( ( int * )item->value, item->count );
+      break;
+    case DJBHASH_HASH:
+      json = djbhash_to_json( ( struct djbhash * )item->value );
       break;
     default:
-      printf( "Unknown data type.%s" );
+      json = strdup( "UNKNOWN" );
   }
+  return json;
+}
+
+// Return a JSON formatted string containing the hash.
+unsigned char *djbhash_to_json( struct djbhash *hash )
+{
+  int i, j;
+  unsigned char *json;
+  unsigned char *key, *value;
+  unsigned int length, pos, size;
+  struct djbhash_node *iter;
+
+  json = calloc( 3, sizeof( unsigned char ) );
+  json[0] = '{';
+  pos = 1;
+  size = 1;
+  djbhash_reset_iterator( hash );
+  iter = djbhash_iterate( hash );
+  while ( iter )
+  {
+    key = djbhash_escaped( iter->key );
+    length = strlen( key );
+
+    // Reallocate memory and set it to null.
+    size += length + 3;
+    json = realloc( json, sizeof( unsigned char ) * size );
+    for ( j = pos; j < size; j++ )
+      json[j] = '\0';
+
+    // Add the key in quotes to the string.
+    for ( j = 0; j < length; j++ )
+      json[j + pos] = key[j];
+    pos += length;
+
+    // Now the value:
+    value = djbhash_value_to_json( iter );
+    length = strlen( value );
+    size += length + 1;
+    json = realloc( json, sizeof( unsigned char ) * size );
+    for ( j = pos; j < size; j++ )
+      json[j] = '\0';
+    json[pos++] = ':';
+
+    for ( j = 0; j < length; j++ )
+      json[j + pos] = value[j];
+    pos += length;
+    iter = djbhash_iterate( hash );
+    if ( iter != NULL )
+      json[pos++] = ',';
+
+    free( key );
+    key = NULL;
+    free( value );
+    value = NULL;
+  }
+  djbhash_reset_iterator( hash );
+  json[pos] = '}';
+  return json;
+}
+
+// Print an items' data.
+void djbhash_print_value( struct djbhash_node *item )
+{
+  // String containing JSON formatted value.
+  unsigned char *json;
+
+  json = djbhash_value_to_json( item );
+  printf( "%s", json );
+  if ( json != NULL )
+  {
+    free( json );
+    json = NULL;
+  }
+  printf( "\n" );
 }
 
 // Print the key value pair.
@@ -39,7 +217,6 @@ void djbhash_print( struct djbhash_node *item )
 {
   printf( "%s => ", item->key );
   djbhash_print_value( item );
-  printf( "\n" );
 }
 
 // Initialize the hash table.
@@ -127,16 +304,18 @@ struct djbhash_search djbhash_bin_search( struct djbhash *hash, int min, int max
 void *djbhash_value( void *value, int data_type, int count )
 {
   int i;
-  long *temp, *iter;
+  int *temp, *iter;
   double *temp2;
   unsigned char *temp3;
   void *ptr;
+  struct djbhash *temp4;
+  struct djbhash_node *item;
 
   switch( data_type )
   {
     case DJBHASH_INT:
-      temp = malloc( sizeof( long ) );
-      *temp = *( long * )value;
+      temp = malloc( sizeof( int ) );
+      *temp = *( int * )value;
       ptr = temp;
       break;
     case DJBHASH_DOUBLE:
@@ -153,11 +332,23 @@ void *djbhash_value( void *value, int data_type, int count )
       ptr = strdup( ( unsigned char * )value );
       break;
     case DJBHASH_ARRAY:
-      temp = malloc( sizeof( long ) * count );
+      temp = malloc( sizeof( int ) * count );
       iter = value;
       for ( i = 0; i < count; i++ )
         temp[i] = iter[i];
       ptr = temp;
+      break;
+    case DJBHASH_HASH:
+      temp4 = malloc( sizeof( struct djbhash ) );
+      djbhash_init( temp4 );
+      item = djbhash_iterate( ( struct djbhash * )value );
+      while ( item )
+      {
+        djbhash_set( temp4, item->key, item->value, item->data_type, item->count );
+        item = djbhash_iterate( ( struct djbhash * )value );
+      }
+      djbhash_reset_iterator( ( struct djbhash * )value );
+      ptr = temp4;
       break;
     default:
       ptr = value;
@@ -344,8 +535,13 @@ void djbhash_free_node( struct djbhash_node *item )
     free( item->key );
     item->key = NULL;
   }
-  if ( item->value != NULL && item->data_type != DJBHASH_OTHER )
+  if ( item->value != NULL && item->data_type != DJBHASH_OTHER && item->data_type != DJBHASH_HASH )
   {
+    free( item->value );
+    item->value = NULL;
+  } else if ( item->data_type == DJBHASH_HASH )
+  {
+    djbhash_destroy( ( struct djbhash * )item->value );
     free( item->value );
     item->value = NULL;
   }
