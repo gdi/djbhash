@@ -59,9 +59,7 @@ struct djbhash {
 // Position when searching for an item.
 struct djbhash_search {
   // Bucket ID
-  int bucket_id;
-  // Whether this bucket ID exists or not.
-  int collision;
+  unsigned int bucket_id;
   // Whether or not the item was actually found.
   int found;
   // The item that matches.
@@ -82,11 +80,17 @@ enum djbhash_data_type {
 };
 
 // Function declarations.
+unsigned char *djbhash_int_to_a( int number );
+unsigned char *djbhash_double_to_a( double number );
+unsigned char *djbhash_json_array( int *array, int count );
+unsigned char *djbhash_escaped( unsigned char *data );
+unsigned char *djbhash_value_to_json( struct djbhash_node *item );
+unsigned char *djbhash_to_json( struct djbhash *hash );
 void djbhash_print_value( struct djbhash_node *item );
 void djbhash_print( struct djbhash_node *item );
 void djbhash_init( struct djbhash *hash );
 unsigned int djb_hash( char *key, int length );
-struct djbhash_search djbhash_bin_search( struct djbhash *hash, int min, int max, int bucket_id, char *key, int length );
+struct djbhash_search djbhash_bin_search( struct djbhash *hash, unsigned int min, unsigned int max, unsigned int bucket_id, char *key, int length );
 void *djbhash_value( void *value, int data_type, int count );
 int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ... );
 struct djbhash_node *djbhash_find( struct djbhash *hash, char *key );
@@ -97,4 +101,3 @@ void djbhash_reset_iterator( struct djbhash *hash );
 void djbhash_free_node( struct djbhash_node *item );
 void djbhash_empty( struct djbhash *hash );
 void djbhash_destroy( struct djbhash *hash );
-unsigned char *djbhash_to_json( struct djbhash *hash );

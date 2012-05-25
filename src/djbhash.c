@@ -249,10 +249,10 @@ unsigned int djb_hash( char *key, int length )
 }
 
 // Find the bucket for the element.
-struct djbhash_search djbhash_bin_search( struct djbhash *hash, int min, int max, int bucket_id, char *key, int length )
+struct djbhash_search djbhash_bin_search( struct djbhash *hash, unsigned int min, unsigned int max, unsigned int bucket_id, char *key, int length )
 {
   // Mid-point for search.
-  int mid;
+  unsigned int mid;
   // Linked list iterator and parent node.
   struct djbhash_node *iter, *parent;
   // Return variable.
