@@ -31,6 +31,7 @@ int main( int argc, char *argv[] )
   djbhash_set( &hash, "other", &test, DJBHASH_OTHER );
 
   // Find and print items.
+  printf( "Finding single items...\n" );
   item = djbhash_find( &hash, "int" );
   djbhash_print( item );
   item = djbhash_find( &hash, "double" );
@@ -45,12 +46,29 @@ int main( int argc, char *argv[] )
   djbhash_print( item );
 
   // Remove an item.
+  printf( "\nRemoving key \"int\"...\n" );
   djbhash_remove( &hash, "int" );
   if ( djbhash_find( &hash, "int" ) == NULL )
     printf( "int removed\n" );
 
+  // Print all items.
+  printf( "\nDumping all items...\n" );
+  djbhash_dump( &hash );
+
+  // Iterate through items.
+  printf( "\nIterating...\n" );
+  item = djbhash_iterate( &hash );
+  while ( item )
+  {
+    djbhash_print( item );
+    item = djbhash_iterate( &hash );
+  }
+  // Reset the iterator.
+  djbhash_reset_iterator( &hash );
+
   // Search for an item that doesn't exist:
   char *missing = "missing key";
+  printf( "\nSearching for a missing key \"%s\"...\n", missing );
   if ( ( item = djbhash_find( &hash, missing ) ) == NULL )
     printf( "%s: No such item!\n", missing );
 
