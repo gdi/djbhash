@@ -78,6 +78,26 @@
     printf( "item removedn" );
 ```
 
+### Print all items in the hash.
+```c
+  djbhash_dump( &hash );
+```
+
+### Iterate through all items in the hash.
+```c
+  item = djbhash_iterate( &hash );
+  while ( item )
+  {
+    djbhash_print( item );
+    item = djbhash_iterate( &hash );
+  }
+```
+
+### Reset the iterator to the first item.
+```c
+  djbhash_reset_iterator( &hash );
+```
+
 #### Cleanup:
 ```c
   // Remove all items and free memory.
