@@ -108,6 +108,7 @@ unsigned char *djbhash_value_to_json( struct djbhash_node *item )
   int i;
   int *arr_ptr;
   unsigned char *json, *str;
+  int length;
 
   switch ( item->data_type )
   {
@@ -134,7 +135,9 @@ unsigned char *djbhash_value_to_json( struct djbhash_node *item )
       json = djbhash_to_json( ( struct djbhash * )item->value );
       break;
     default:
-      json = strdup( "UNKNOWN" );
+      length = strlen( "UNKOWN" );
+      json = calloc( length + 1, sizeof( unsigned char ) );
+      memcpy( json, "UNKNOWN", length );
   }
   return json;
 }
@@ -310,6 +313,9 @@ void *djbhash_value( void *value, int data_type, int count )
   void *ptr;
   struct djbhash *temp4;
   struct djbhash_node *item;
+  unsigned char *str;
+  int length;
+  void **temp5;
 
   switch( data_type )
   {
@@ -329,7 +335,10 @@ void *djbhash_value( void *value, int data_type, int count )
       ptr = temp3;
       break;
     case DJBHASH_STRING:
-      ptr = strdup( ( unsigned char * )value );
+      length = strlen( ( char * )value );
+      str = calloc( length + 1, sizeof( unsigned char ) );
+      memcpy( str, ( char * )value, length );
+      ptr = str;
       break;
     case DJBHASH_ARRAY:
       temp = malloc( sizeof( int ) * count );
@@ -370,7 +379,7 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
   int count;
 
   // Default invalid data types.
-  if ( data_type < DJBHASH_INT || data_type > DJBHASH_OTHER )
+  if ( data_type < DJBHASH_INT || data_type > DJBHASH_OTHER_MALLOCD )
     data_type = DJBHASH_STRING;
 
   // If the data type is an array, track how many items the array has.
@@ -398,7 +407,8 @@ int djbhash_set( struct djbhash *hash, char *key, void *value, int data_type, ..
 
   // Create our hash item.
   temp = malloc( sizeof( struct djbhash_node ) );
-  temp->key = strdup( key );
+  temp->key = calloc( length + 1, sizeof( unsigned char ) );
+  memcpy( temp->key, key, length );
   temp->value = djbhash_value( value, data_type, count );
   temp->data_type = data_type;
   temp->count = count;
