@@ -77,6 +77,7 @@ enum djbhash_data_type {
   DJBHASH_ARRAY,
   DJBHASH_HASH,
   DJBHASH_OTHER,
+  DJBHASH_OTHER_MALLOCD,
 };
 
 // Function declarations.
