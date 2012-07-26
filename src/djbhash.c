@@ -565,10 +565,10 @@ void djbhash_empty( struct djbhash *hash )
   int i;
   struct djbhash_node *iter;
   struct djbhash_node *next;
-  for ( i = 0; i < hash->active_count; i++ )
+  for ( i = 0; i < DJBHASH_MAX_BUCKETS; i++ )
   {
-    iter = hash->buckets[hash->active[i]].list;
-    while ( iter != NULL )
+    iter = hash->buckets[i].list;
+    while ( iter )
     {
       next = iter->next;
       djbhash_free_node( iter );
